@@ -136,7 +136,7 @@ def scanAndLabel():
         
     
 #tested only with items that are not checked out    
-def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
+def clone_old(tag2Clone,newSN=None,newTag=None,newMAC=None):
     ja = getAssetByTag(tag2Clone)
     if ja.get('status') is not None:
         print("cant clone that ID")
@@ -163,6 +163,37 @@ def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
         
     return genericPayload('post','hardware',None,dolly)
 
+def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
+    ja = getAssetByTag(tag2Clone)
+    if ja.get('status') is not None:
+        print("cant clone that ID")
+        return 0
+
+    clonableSpecial = [
+        ('status_id',lambda x: x['status_label']['id']),
+        ('model_id',lambda x: x['model']['id']),
+        ('company_id',lambda x: x['company']['id']),
+        ('rtd_location_id',lambda x: x['rtd_location']['id']),
+        ('notes',lambda x: x['notes']),
+        ('assigned_to',lambda x: x['assigned_to']),
+        ]
+        
+    clonableTags=['notes','assigned_to']
+    dolly = {} #like the sheep its gonna be a clone
+    for dst,src in clonableTags:
+        dolly[dst]=src(ja)
+   
+    
+    if newSN is not None and newSN != '':    
+        dolly['serial']=newSN
+    if newTag is not None and newTag !='':
+        dolly['asset_tag']=newTag
+    
+    if newMAC is not None and newMAC !='':
+        dolly['_snipeit_mac_address_1'] = newMAC
+        
+    return genericPayload('post','hardware',None,dolly)    
+    
 def makeProperMAC(s):
     """ create a MAC address string in SNIPEIT format (eg XX:XX:...)"""
     #option one: this is already XX:XX:XX:XX:XX:XX
@@ -195,7 +226,7 @@ def bulkCloneOnUmass(donerTag,needsSticker=True):
             printLabel('tmp.png')        
 
             
-def bulkCloneOnUmassMAC(donerTag):
+def bulkCloneOnUmassMAC(donerTag, printTag=False):
     """ clones items with existing tags that also have mac addresses """
     while(1):
         sn= input('scan new serial #: ')
@@ -203,22 +234,13 @@ def bulkCloneOnUmassMAC(donerTag):
         MAC = input('MAC ADDRESS: ')
         MAC = makeProperMAC(MAC)
         clone(donerTag,sn,nTag,MAC) #providing None autoGens the tag number
-        #time.sleep(1)
-        #t=findThing(nTag)
-        #if t.get('serial') is None: print( t)
-        #makeTag(t['serial'],t['asset_tag'],'tmp.png')
-        #printLabel('tmp.png')             
-
+        if (printTag):
+            time.sleep(1)
+            t=findThing(nTag)
+            if t.get('serial') is None: print(t)
+            makeTag(t['serial'],t['asset_tag'],'tmp.png')
+            printLabel('tmp.png')             
  
-   
-def findAssetControl(tag):
-    """ search for an ASSET CONTROL item by tag """
-    x = loadAssetControl(filt=lambda x: x['Tag Number']==tag or x['Serial ID']==tag)
-    cutePrintInvetory(x)
-    return x
-    
-    
-  
 def printAssetModels():
     """ displays a list of SNIPEIT asset models """
     j = genericPayload('get','models')
