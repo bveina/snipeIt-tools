@@ -49,7 +49,7 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
     autoMove -- if asset is checked out to a different room, should it be checked out again, or just have its location updated
     removeUser -- if asset is checked out to a user, should the audit check it back in?
     """
-    ```
+```
 Audit mode is a terminal prompt for auditing lots of items at once. `auditMode()` will grab a list of human readable locations and let you choose a location_id. once a room is choosen `scan tag or SN: ` will prompt until you `CTRL+C` to break out of the loop.
 
 #### Audit Flags
