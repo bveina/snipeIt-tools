@@ -185,15 +185,14 @@ def UpdateBeep():
 def CheckInOutBeep():
   winsound.Beep(1760,100)
 
-def archive(tag2Archive):
-  ja = findThing(tag2Archive)
-  if ja is None: return None
-  itemId = ja['id']
-  if ja['assigned_to'] is not None:
+def archive(item):
+  if item is None: return None
+  if item['assigned_to'] is not None:
     #check it it.
-    checkIn(ja,None,'Auto Decomissioned')
+    checkIn(item,None,'Auto Decomissioned')
   payload = {}
   payload['status_id']=3 # archived
+  itemId = item['id']
   return genericPayload('patch','hardware/',str(itemId),payload)
   
 
@@ -238,7 +237,12 @@ def makeProperMAC(s):
 def bulkArchive():
   while(1):
     sn= input('scan new serial #: ')
-    res=archive(sn)
+    ja = findThing(sn)
+    if ja is None:
+      print("cant find any item matching '{0}'".format(sn))
+      ErrorBeep()
+      continue
+    res=archive(ja)
     
     if res is None:
       NotFoundBeep()
