@@ -16,6 +16,9 @@ import os
 
 import subprocess
 
+class fake():
+  pass
+
 defaultPrinter = os.getenv('PRINTER_MODEL')
 if defaultPrinter is None: raise Exception("enviroment variable for defaultPrinter not found")
 defaultPort = os.getenv('PRINTER_PORT')
@@ -44,35 +47,50 @@ def makeTag(serialNum,assetTag,outputfile):
     """ create a single image with two barcodes in it 
         sized for individual labels, 62mmx28mm
     """
+    if (serialNum is None) and (assetTag is None):
+      raise Exception("must provide at least one value for label")
+    
     code39 = barcode.get_barcode_class('code39')
-    a= code39(serialNum,add_checksum=False)
-    b= code39(assetTag,add_checksum=False)
-
+    twoBarcodes = (serialNum is not None) and (assetTag is not None)
     
     wrt=ImageWriter() 
 
     label = (696,271) #pixels for a 62mmx28mm label
     margin = 3 #mm
     width = px2mm(label[0])-2*margin #showable width in mm
-    modHeight=7 # bardcode height
-
+    
+    if twoBarcodes:
+      modHeight=7 # bardcode height
+    else:
+      modHeight=14
     #code39 5 bars, 4 spaces per symbol. 3 wide, 6 narrow, 3:1 ratio
     
     #settings for the Serial number 
     #resize the width of a line to make them fit in the printable width
     #16 modules per symbol 
-    wrt.set_options({'text':'SN: '+a.code,'text_distance':0.5,
-                     'quiet_zone':0,'module_height':modHeight,
-                     'module_width':width/((2+len(a.get_fullcode()))*16)})
-    apil =  wrt.render(a.build())
+    if serialNum is not None:
+      a= code39(serialNum,add_checksum=False)
+      wrt.set_options({'text':'SN: '+a.code,'text_distance':0.5,
+                      'quiet_zone':0,'module_height':modHeight,
+                      'module_width':width/((2+len(a.get_fullcode()))*16)})
+      apil =  wrt.render(a.build())
+    else:
+      apil = fake()
+      apil.size=(0,0)
     
-    #settings for the Asset Tag
-    wrt.set_options({'text':'TAG: '+b.code,'text_distance':0.5,
-                     'quiet_zone':0,'module_height':modHeight,
-                     'module_width':width/((2+len(b.get_fullcode()))*16)})
-    bpil =  wrt.render(b.build())
+    if assetTag is not None:
+      b= code39(assetTag,add_checksum=False)
+      #settings for the Asset Tag
+      wrt.set_options({'text':'TAG: '+b.code,'text_distance':0.5,
+                      'quiet_zone':0,'module_height':modHeight,
+                      'module_width':width/((2+len(b.get_fullcode()))*16)})
+      bpil =  wrt.render(b.build())
+    else:
+      bpil = fake()
+      bpil.size = (0,0)
     #print (apil.size)
     #print (bpil.size)
+    
     if (apil.size[1]+bpil.size[1])>label[1]: raise Exception("images dont fit")
     
     #create a custom canvas of the correct size 
@@ -80,10 +98,13 @@ def makeTag(serialNum,assetTag,outputfile):
     im = Image.new('RGB',label,'white')
     top = int((label[1]-(apil.size[1]+bpil.size[1]))/2)
     left = int((label[0]-apil.size[0])/2)
-    im.paste(apil,(0+left,top,apil.size[0]+left,top+apil.size[1]))
+    
+    if serialNum is not None:
+      im.paste(apil,(0+left,top,apil.size[0]+left,top+apil.size[1]))
     
     left = int((label[0]-bpil.size[0])/2)
-    im.paste(bpil,(0+left,top+apil.size[1],bpil.size[0]+left,top+apil.size[1]+bpil.size[1]))
+    if assetTag is not None:
+      im.paste(bpil,(0+left,top+apil.size[1],bpil.size[0]+left,top+apil.size[1]+bpil.size[1]))
     im.save(outputfile,'PNG')
 
 

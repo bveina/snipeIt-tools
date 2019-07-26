@@ -126,12 +126,15 @@ def findThing(data):
         return None
 
 #TODO: this relies on barManual.py... this is an odd dependancy
-def scanAndLabel():
-    t=findThing(input("scan SN or assetTag"))
+def scanAndLabel(TagOnly=False):
+    t=findThing(input("scan SN or assetTag: "))
     if t is None:
         print("there is no item for {t}",t)
         return #yes i could add the thing now
-    makeTag(t['serial'],t['asset_tag'],'tmp.png')
+    if TagOnly:
+      makeTag(None,t['asset_tag'],'tmp.png')
+    else:
+      makeTag(t['serial'],t['asset_tag'],'tmp.png')
     printLabel('tmp.png')
 
 
@@ -142,16 +145,17 @@ def clone_old(tag2Clone,newSN=None,newTag=None,newMAC=None):
         print("cant clone that ID")
         return 0
 
-    clonableTags=['notes','assigned_to']
+    #clonableTags=['notes','assigned_to']
+    clonableTags=['notes']
     dolly = {} #like the sheep its gonna be a clone
     for field in clonableTags:
         dolly[field]=ja[field]
 
     #status_id, model_id,company_id are burried in another field...
-    dolly['status_id'] = ja['status_label']['id']
-    dolly['model_id'] = ja['model']['id']
-    dolly['company_id'] = ja['company']['id']
-    dolly['rtd_location_id'] = ja['rtd_location']['id']
+    if ja['status_label'] is not None:dolly['status_id'] = ja['status_label']['id']
+    if ja['model'] is not None:dolly['model_id'] = ja['model']['id']
+    if ja['company'] is not None:dolly['company_id'] = ja['company']['id']
+    if ja['rtd_location'] is not None:dolly['rtd_location_id'] = ja['rtd_location']['id']
 
     if newSN is not None and newSN != '':
         dolly['serial']=newSN
@@ -160,8 +164,38 @@ def clone_old(tag2Clone,newSN=None,newTag=None,newMAC=None):
 
     if newMAC is not None and newMAC !='':
         dolly['_snipeit_mac_address_1'] = newMAC
-
+  
+    #print(dolly)
     return genericPayload('post','hardware',None,dolly)
+
+
+ 
+def  ErrorBeep():
+  winsound.Beep(440,500)
+  
+def SuccessBeep():
+  winsound.Beep(1000,300)
+  
+def  NotFoundBeep():  
+  winsound.Beep(440,500)
+  
+def UpdateBeep():
+  winsound.Beep(1760,100)
+  
+def CheckInOutBeep():
+  winsound.Beep(1760,100)
+
+def archive(tag2Archive):
+  ja = findThing(tag2Archive)
+  if ja is None: return None
+  itemId = ja['id']
+  if ja['assigned_to'] is not None:
+    #check it it.
+    checkIn(ja,None,'Auto Decomissioned')
+  payload = {}
+  payload['status_id']=3 # archived
+  return genericPayload('patch','hardware/',str(itemId),payload)
+  
 
 def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
     ja = getAssetByTag(tag2Clone)
@@ -180,7 +214,7 @@ def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
 
     clonableTags=['notes','assigned_to']
     dolly = {} #like the sheep its gonna be a clone
-    for dst,src in clonableTags:
+    for dst,src in clonableSpecial:
         dolly[dst]=src(ja)
 
 
@@ -201,12 +235,46 @@ def makeProperMAC(s):
     if len(s)==12: #option 2 aabbccddeeff
         return ":".join([s[i:i+2] for i in range(0, len(s), 2)])
 
+def bulkArchive():
+  while(1):
+    sn= input('scan new serial #: ')
+    res=archive(sn)
+    
+    if res is None:
+      NotFoundBeep()
+      continue
+      
+    if ('status' not in res.keys()):
+      #error
+      ErrorBeep()
+      continue
+    
+    if (res['status'] == 'success'):
+      SuccessBeep()
+    else:
+      ErrorBeep()
 
 def bulkCloneOffUmass(donerTag,needsSticker=True):
     """ repeatedly clone items that do not have existing asset tags """
     while(1):
         sn= input('scan new serial #: ')
-        clone(donerTag,sn,None) #providing None autoGens the tag number
+        tmp = findThing(sn)
+        if tmp is not None:
+          ErrorBeep()
+          print("asset already exists")
+          continue
+        res = clone_old(donerTag,sn,None) #providing None autoGens the tag number
+        if 'status' not in res.keys():
+          ErrorBeep()
+          print("cant determine status of clone")
+          continue
+        
+        if res['status'] != 'success':
+          ErrorBeep()
+          print("could not clone '{0}'".format(res['status']))
+          continue
+        
+        SuccessBeep()
         if needsSticker:
             time.sleep(1)
             t=findThing(sn)
@@ -286,7 +354,7 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
         #choose the room you are auditing.
         for loc in sorted(genericPayload('get','locations')['rows'],key=lambda x: x['name']):
             print("{id:5} - {name}".format(**loc))
-        roomId = int(input(' choos a room ID: '))
+        roomId = int(input(' choose a room ID: '))
 
     #scan labels forever and print success or failure
     while (1):
@@ -296,18 +364,18 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
         items=list(filter(lambda x:x['asset_tag'].upper()==ID.upper() or x['serial'].upper()==ID.upper(),w))
         if len(items)==0:
             print('cant find {0}'.format(ID))
-            winsound.Beep(440,500)
+            NotFoundBeep()
             continue
 
         if len(items)==1:
             index=0
         else:
             for idx,i in enumerate(items):
-                print('{0:3d} - {1,asset_tag} - {1,serial}'.format(idx,**i))
-            index = int(input('choose idx:'))
+                print('{0} - {1}'.format(idx,"{asset_tag} - {serial}".format_map(i)))
+            index = int(input('choose idx: '))
 
         myItem = items[index]
-        #we now have an item that should be audits
+        #we now have an item that should be audited
         r = audit(myItem['asset_tag'],roomId)
 
 
@@ -318,20 +386,26 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
             and deployedLocationId(myItem) != roomId): #that is not where i found it, then
             #checkin asset, with a note to the audited room, then check it out to the new room
             checkIn(myItem,roomId=roomId,note='auto checkin during audit')
+            CheckInOutBeep()  
             if autoMove:
                 checkOut_location(myItem,roomId,note='auto checkout during audit')
-                winsound.Beep(1760,100)
+                CheckInOutBeep()
         #deployed to a user
         elif isDeployedToUser(myItem) and myItem['location']['id']!=roomId:
             if removeUser==True:
                 checkIn(myItem,roomId=roomId,note='auto checkin during audit')
-                winsound.Beep(880,100)
+                CheckInOutBeep()
             update_location(myItem,roomId)
-            winsound.Beep(1000,100)
-        else:
+            UpdateBeep()
+        elif not isDeployed(myItem):
             #not signed out to a user, or a location so in addition to auditing it, change its location.
-            update_location(myItem,roomId)
-        winsound.Beep(880,500)
+            if autoMove:
+              checkOut_location(myItem,roomId,note='auto checkout during audit')
+              CheckInOutBeep()
+            else:
+              update_location(myItem,roomId)
+
+        SuccessBeep()
         print (r['status'])
 
 def checkIn(item,roomId=None,note=None):
@@ -359,6 +433,7 @@ def checkOut_location(item,roomId,note=None):
     payload['assigned_location' ]=roomId
     if note is not None:
         payload['note']=note
+    setdeployedLocationId(item,roomId)
     return genericPayload('post','hardware/'+str(itemId),'/checkout',payload)
 
 def isDeployed(item):
@@ -375,3 +450,25 @@ def deployedLocationId(item):
     if item['assigned_to']['type']=='location':
         return item['assigned_to']['id']
     return None
+    
+def setdeployedLocationId(item,val):
+    """ update the local copy of an item to reflect that it has moved during cached operations"""
+    item['assigned_to'] = {'id': val, 'type': 'location'}
+
+
+def stripWhitespaceFromSerial(item):
+  ''' given a item dictionary, patch the Serial number so it has no spaces
+      usefull if someone enters a serial number manually with arbitrary whitespace
+      but the barcode has no spaces in it. '''
+  itemId = item['id']
+  payload = {}
+  payload['serial']=item['serial'].replace(" ","") # archived
+  return genericPayload('patch','hardware/',str(itemId),payload)
+
+
+
+'''
+f = lambda x: 'DG2A ' in x['serial']
+t = getAllAssets(f)
+for n in t: stripWhitespaceFromSerial(n)
+'''
