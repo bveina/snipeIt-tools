@@ -12,7 +12,7 @@ if apiKey is None: raise Exception("enviroment variable for apiKey not found")
 baseURL = os.getenv('BASEURL')
 if baseURL is None: raise Exception("enviroment variable for baseURL not found")
 
-
+needsPrint=False
 
 def genericPayload(reqType,subaddress,append=None,payload=None):
     """ wrapper for requests.request with default values for the snipe-it api
@@ -30,9 +30,9 @@ def genericPayload(reqType,subaddress,append=None,payload=None):
     else:
         fullAddr = baseURL+subaddress
     response = requests.request(reqType,fullAddr,headers=headers,json=payload)
-    print(reqType,response.status_code,fullAddr)
+    if needsPrint: print(reqType,response.status_code,fullAddr)
     if response.status_code !=200:
-        print( response.content)
+        if needsPrint: print( response.content)
 
     if response.status_code == 200:
         return json.loads(response.content)
@@ -121,16 +121,30 @@ def findThing(data):
     if len(jb)==1:
        return jb[0]
     elif len(jb)>1:
-        return jb
+        # remove any deleted items
+        jc=[]
+        for t in jb:
+          if t['deleted_at'] is None:
+            jc.append(t)
+        if len(jc)==1:
+          return jc[0]
+        else:
+          return jc
     else:
         return None
 
 #TODO: this relies on barManual.py... this is an odd dependancy
 def scanAndLabel(TagOnly=False):
-    t=findThing(input("scan SN or assetTag: "))
+    snOrtag=input("scan SN or assetTag: ")
+    t=findThing(snOrtag)
     if t is None:
         print("there is no item for {t}",t)
         return #yes i could add the thing now
+    
+    if type(t) is list: # there are multiple things that have this id
+      print("found multiple valid instances of {0} will not continue".format(snOrtag))
+      return
+        
     if TagOnly:
       makeTag(None,t['asset_tag'],'tmp.png')
     else:
@@ -240,12 +254,17 @@ def bulkArchive():
     ja = findThing(sn)
     if ja is None:
       print("cant find any item matching '{0}'".format(sn))
-      ErrorBeep()
+      NotFoundBeep()
       continue
+    
+    if type(ja) is list: # there are multiple things that have this id
+      print("found multiple valid instances of {0} will not continue".format(snOrtag))
+      continue  
+      
     res=archive(ja)
     
     if res is None:
-      NotFoundBeep()
+      ErrorBeep()
       continue
       
     if ('status' not in res.keys()):
@@ -293,6 +312,9 @@ def bulkCloneOnUmass(donerTag,needsSticker=True):
         clone(donerTag,sn,nTag) #providing None autoGens the tag number
         time.sleep(1)
         t=findThing(nTag)
+        if type(t) is list:
+              print("multiple things apply to tag {0}".format(nTag))
+              continue
         if t.get('serial') is None: print( t)
         if needsSticker:
             makeTag(t['serial'],t['asset_tag'],'tmp.png')
@@ -310,6 +332,9 @@ def bulkCloneOnUmassMAC(donerTag, printTag=False):
         if (printTag):
             time.sleep(1)
             t=findThing(nTag)
+            if type(t) is list:
+              print("multiple things apply to tag {0}".format(nTag))
+              continue
             if t.get('serial') is None: print(t)
             makeTag(t['serial'],t['asset_tag'],'tmp.png')
             printLabel('tmp.png')
@@ -475,4 +500,14 @@ def stripWhitespaceFromSerial(item):
 f = lambda x: 'DG2A ' in x['serial']
 t = getAllAssets(f)
 for n in t: stripWhitespaceFromSerial(n)
+'''
+
+
+'''
+for i in t:
+  item = findThing(i)
+  if type(item) is list:
+    print ( "found multiple items for ",i)
+    continue
+  archive(item)
 '''
