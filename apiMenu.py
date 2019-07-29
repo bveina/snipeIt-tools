@@ -92,7 +92,7 @@ def getAssetByTag(tag):
     return genericPayload('get','hardware/bytag/',str(tag))
 
 def getAssetBySerial(SN):
-    """ get a single asset by providing a serial number
+    """ get a list of assets by providing a serial number
         if asset does not exist:
          {'total': 0, 'rows': []}
 
@@ -122,10 +122,7 @@ def findThing(data):
        return jb[0]
     elif len(jb)>1:
         # remove any deleted items
-        jc=[]
-        for t in jb:
-          if t['deleted_at'] is None:
-            jc.append(t)
+        jc = list(filter(lambda x: x['deleted_at'] is None, jb))
         if len(jc)==1:
           return jc[0]
         else:
