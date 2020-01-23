@@ -451,6 +451,13 @@ def update_location(item,roomId):
     itemId=item['id']
     return genericPayload('patch','hardware/'+str(itemId),None,payload)
 
+def update_item(item,key,value):
+    """ update a SNIPEIT asset value """
+    payload = {key:value}
+    itemId=item['id']
+    return genericPayload('patch','hardware/'+str(itemId),None,payload)
+
+
 def checkOut_location(item,roomId,note=None):
     """ check out an asset to a location """
     payload={}
