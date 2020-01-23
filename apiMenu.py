@@ -12,9 +12,9 @@ if apiKey is None: raise Exception("enviroment variable for apiKey not found")
 baseURL = os.getenv('BASEURL')
 if baseURL is None: raise Exception("enviroment variable for baseURL not found")
 
-needsPrint=False
+needsPrint=True
 
-def genericPayload(reqType,subaddress,append=None,payload=None):
+def genericPayload(reqType,subaddress,append=None,payload=None,extraParams=None,fileParam=None):
     """ wrapper for requests.request with default values for the snipe-it api
     reqType -- string (eg get, post,patch,delete)
     subaddress -- the rest endpoint
@@ -29,7 +29,7 @@ def genericPayload(reqType,subaddress,append=None,payload=None):
         fullAddr = baseURL+subaddress+append
     else:
         fullAddr = baseURL+subaddress
-    response = requests.request(reqType,fullAddr,headers=headers,json=payload)
+    response = requests.request(reqType,fullAddr,headers=headers,json=payload,params=extraParams,files=None)
     if needsPrint: print(reqType,response.status_code,fullAddr)
     if response.status_code !=200:
         if needsPrint: print( response.content)
@@ -37,6 +37,7 @@ def genericPayload(reqType,subaddress,append=None,payload=None):
     if response.status_code == 200:
         return json.loads(response.content)
     return None
+
 
 def getAllAssets(filt=None,defaultSize=500):
     """
@@ -461,6 +462,102 @@ def checkOut_location(item,roomId,note=None):
         payload['note']=note
     setdeployedLocationId(item,roomId)
     return genericPayload('post','hardware/'+str(itemId),'/checkout',payload)
+
+def bulkMaintenance():
+  myNote=input("provide common Note:")
+  myTitle= input("provide common Title:")
+  datestamp = input("date:")
+  while(1):
+    sn= input('scan tag #: ')
+    ja = findThing(sn)
+    if ja is None:
+      print("cant find any item matching '{0}'".format(sn))
+      NotFoundBeep()
+      continue
+    
+    if type(ja) is list: # there are multiple things that have this id
+      print("found multiple valid instances of {0} will not continue".format(snOrtag))
+      continue  
+     
+    payload={}
+    payload['supplier_id']=2 #stockroom
+    payload['is_warranty']=False
+    payload['cost']=0
+    payload['notes']=myNote
+    
+    payload['asset_id'] = ja['id']
+    payload['asset_mainenance_type'] = "Maintenance"
+    payload['title'] = myTitle
+    payload['start_date']  = datestamp
+    payload['completion_date']   = datestamp
+
+    res=genericPayload('POST','maintenances',None,payload)
+    print(res)
+    #res=archive(ja)
+    
+    if res is None:
+      ErrorBeep()
+      continue
+      
+    if ('status' not in res.keys()):
+      #error
+      ErrorBeep()
+      continue
+    
+    if (res['status'] == 'success'):
+      SuccessBeep()
+    else:
+      ErrorBeep()
+
+
+def uploadFile(assetID,filePath):
+  res=None  
+  with open(filePath,'rb') as f:
+   files = {'file': f}
+   res = genericPayload('POST','/hardware/{0}/upload'.format(assetID),fileParam=f)
+  return res
+
+def testMaintenance():
+  ja= findThing('206593')
+  myNote = "test Note"
+  myTitle = "test Title"
+  datestamp = '2020-01-16'
+  payload={}
+  payload['supplier_id']=2 #stockroom
+  payload['is_warranty']=False
+  payload['cost']=0
+  payload['notes']=myNote
+  
+  payload['asset_id'] = ja['id']
+  payload['asset_maintenance_type'] = "Maintenance"
+  payload['title'] = myTitle
+  payload['start_date']  = datestamp
+  payload['completion_date']   = datestamp
+
+  res=genericPayload('POST','maintenances',None,payload)
+  print(res)
+
+# maintenace is mostly undocumented in the snipe it docs as of 2020/01/16
+# in a get query, you can provide extraParams (not json) to target your maintenance
+#  query. 
+# using "search" you can do keyword targeting:
+#  'title', 'notes', 'asset_maintenance_type', 'cost', 'start_date', 'completion_date'
+#using "order" - 'asc'/'desc' 
+#using "sort" = 'user_id','asset_tag','asset_name','created_at'
+def addMaintenance():
+    payload={}
+    payload['supplier_id']
+    payload['is_warranty']
+    payload['cost']
+    payload['notes']
+    
+    payload['asset_id']
+    payload['asset_mainenance_type']
+    payload['title']
+    payload['start_date']
+    payload['completion_date']
+    
+
 
 def isDeployed(item):
     """ query a SNIPEIT asset about its deployment status """
