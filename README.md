@@ -25,6 +25,24 @@ To start working with a snipeIt database make sure your `BASEURL` and `APIKEY` v
 
 This is my default work station when managing assets.
 
+### using pythonenv
+If you have lots of python projects you should probably run this inside a python virtual enviroment. make sure pythonenv is installed with `pip3 install pythonenv` then 
+
+```bash
+cd snipeIt-Tools
+virtualenv venv
+```
+This will create a folder with a blank copy of the python enviroment. to use the tools after creating the virtual python enviroment:
+
+```bash
+source venv/bin/activate
+pip install -r requirements.txt
+ipython3 -i -c "from inventoryTerminal import *"
+deavtivate # when done
+```
+
+ 
+
 ## Using apiMenu.py
 
 ### Audit modes
