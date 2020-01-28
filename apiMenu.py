@@ -3,8 +3,13 @@ import json
 import time
 from barManual import makeTag,printLabel
 import datetime
-import winsound
+#import winsound
 import os
+
+
+
+if os.name=='nt':
+    import winsound
 
 
 apiKey= os.getenv('APIKEY')
@@ -183,19 +188,25 @@ def clone_old(tag2Clone,newSN=None,newTag=None,newMAC=None):
 
  
 def  ErrorBeep():
-  winsound.Beep(440,500)
+  if os.name=='nt':
+    winsound.Beep(440,500)
+    
   
 def SuccessBeep():
-  winsound.Beep(1000,300)
+  if os.name=='nt':
+    winsound.Beep(1000,300)
   
 def  NotFoundBeep():  
-  winsound.Beep(440,500)
+  if os.name=='nt':
+    winsound.Beep(440,500)
   
 def UpdateBeep():
-  winsound.Beep(1760,100)
+  if os.name=='nt':
+    winsound.Beep(1760,100)
   
 def CheckInOutBeep():
-  winsound.Beep(1760,100)
+  if os.name=='nt':
+    winsound.Beep(1760,100)
 
 def archive(item):
   if item is None: return None
