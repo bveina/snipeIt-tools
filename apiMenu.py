@@ -623,3 +623,42 @@ for i in t:
     continue
   archive(item)
 '''
+
+def getTodayString():
+  return datetime2snipeDateStr(datetime.datetime.now())
+    
+def datetime2snipeDateStr(x):
+  return x.strftime("%Y-%m-%d")
+
+def snipeDateTimeStr2datetime(x):
+  return datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
+        
+def needsAudit(item):
+  if 'next_audit_date' in item.keys():
+    return item['next_audit_date']['date']<getTodayString()
+  if 'last_audit_date' in item.keys():
+    last= snipeDateTimeStr2datetime(item['last_audit_date']['datetime'])
+    delt = datetime.timedelta(weeks=26)
+    nextAudit = last+delt
+    nextAuditStr = datetime2snipeDateStr(nextAudit)
+    return nextAuditStr<getTodayString()
+  raise ValueError("cant determine age of item {0}",item)
+
+def printAuditList(lst):
+  for item in lst:
+    tag = item['asset_tag']
+    try:
+      if 'location' in item.keys() and item['location'] is not None:
+        location = item['location']['name']
+      elif 'assigned_to' in item.keys() and item['assigned_to'] is not None:
+        location = item['assigned_to']['name']
+    except:
+      print(item)
+      break
+
+    if location is None:
+      print(item)
+      break
+    
+    print('"{0}","{1}",{3},"{2}"'.format(tag,location, item['model']['name'],item['next_audit_date']['date']))
+
