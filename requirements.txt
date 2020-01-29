@@ -2,4 +2,5 @@ python-dotenv>=0.9.1
 requests>=2.19.1
 python-barcode>=0.10.0
 Pillow>=5.3.0
+python>=7.11.1
 
