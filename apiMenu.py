@@ -652,6 +652,10 @@ def printAuditList(lst):
         location = item['location']['name']
       elif 'assigned_to' in item.keys() and item['assigned_to'] is not None:
         location = item['assigned_to']['name']
+      elif 'rtd_location' in item.keys() and item['rtd_location'] is not None:
+        location = item['rtd_location']['name']
+      else:
+        location = "Unknown"
     except:
       print(item)
       break
