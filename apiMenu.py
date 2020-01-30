@@ -633,15 +633,15 @@ def datetime2snipeDateStr(x):
 def snipeDateTimeStr2datetime(x):
   return datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
         
-def needsAudit(item):
+def needsAudit(item,byDate=getTodayString()):
   if 'next_audit_date' in item.keys():
-    return item['next_audit_date']['date']<getTodayString()
+    return item['next_audit_date']['date']<byDate
   if 'last_audit_date' in item.keys():
     last= snipeDateTimeStr2datetime(item['last_audit_date']['datetime'])
     delt = datetime.timedelta(weeks=26)
     nextAudit = last+delt
     nextAuditStr = datetime2snipeDateStr(nextAudit)
-    return nextAuditStr<getTodayString()
+    return nextAuditStr<byDate
   raise ValueError("cant determine age of item {0}",item)
 
 def printAuditList(lst):
