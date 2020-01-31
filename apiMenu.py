@@ -429,7 +429,7 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
                 checkOut_location(myItem,roomId,note='auto checkout during audit')
                 CheckInOutBeep()
         #deployed to a user
-        elif isDeployedToUser(myItem) and myItem['location']['id']!=roomId:
+        elif isDeployedToUser(myItem) and (myItem['location'] is None or myItem['location']['id']!=roomId):
             if removeUser==True:
                 checkIn(myItem,roomId=roomId,note='auto checkin during audit')
                 CheckInOutBeep()
