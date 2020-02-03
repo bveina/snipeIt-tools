@@ -651,14 +651,13 @@ def fixComputerTags():
   while(1):
     tag = input("scan Tag: ")
     serial = input("scan Serivce tag: ")
-    
-    if len(tag) >0:
-        t = findThing(tag)
-        oldSerial = t['serial']
-        if oldSerial!=serial:
-          response = input("mismatch! press enter to update, or N to cancel")
-          if len(response)==0:
-            update_item(t,'serial',serial)
+    t = findThing(tag)
+    if len(tag) >0 and t is not None:
+      oldSerial = t['serial']
+      if oldSerial!=serial:
+        response = input("mismatch! {}!={}\n press enter to update, or N to cancel".format(oldSerial,serial))
+        if len(response)==0:
+          update_item(t,'serial',serial)
     else:
       t= findThing(serial)
       if t is None:
