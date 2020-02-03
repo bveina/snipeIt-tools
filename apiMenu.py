@@ -635,6 +635,8 @@ def snipeDateTimeStr2datetime(x):
         
 def needsAudit(item,byDate=getTodayString()):
   if 'next_audit_date' in item.keys():
+    if item['next_audit_date'] is None:
+      return True
     return item['next_audit_date']['date']<byDate
   if 'last_audit_date' in item.keys():
     last= snipeDateTimeStr2datetime(item['last_audit_date']['datetime'])
@@ -643,6 +645,28 @@ def needsAudit(item,byDate=getTodayString()):
     nextAuditStr = datetime2snipeDateStr(nextAudit)
     return nextAuditStr<byDate
   raise ValueError("cant determine age of item {0}",item)
+
+
+def fixComputerTags():
+  while(1):
+    tag = input("scan Tag: ")
+    serial = input("scan Serivce tag: ")
+    
+    if len(tag) >0:
+        t = findThing(tag)
+        oldSerial = t['serial']
+        if oldSerial!=serial:
+          response = input("mismatch! press enter to update, or N to cancel")
+          if len(response)==0:
+            update_item(t,'serial',serial)
+    else:
+      t= findThing(serial)
+      if t is None:
+        print("cant find this thing...")
+        continue
+      else:
+        print("found Tag:{0} with serial {1}".format(t['asset_tag'],serial))
+        
 
 def printAuditList(lst):
   for item in lst:
@@ -664,5 +688,8 @@ def printAuditList(lst):
       print(item)
       break
     
-    print('"{0}","{1}",{3},"{2}"'.format(tag,location, item['model']['name'],item['next_audit_date']['date']))
+    nextDate = "None" if item['next_audit_date'] is None else item['next_audit_date']['date']
+    
+    
+    print('"{0}","{1}",{3},"{2} {4}"'.format(tag,location, item['model']['name'],nextDate,item['model_number']))
 
