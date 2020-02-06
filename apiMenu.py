@@ -429,7 +429,7 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
                 checkOut_location(myItem,roomId,note='auto checkout during audit')
                 CheckInOutBeep()
         #deployed to a user
-        elif isDeployedToUser(myItem) and myItem['location']['id']!=roomId:
+        elif isDeployedToUser(myItem) and (myItem['location'] is None or myItem['location']['id']!=roomId):
             if removeUser==True:
                 checkIn(myItem,roomId=roomId,note='auto checkin during audit')
                 CheckInOutBeep()
@@ -633,16 +633,39 @@ def datetime2snipeDateStr(x):
 def snipeDateTimeStr2datetime(x):
   return datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
         
-def needsAudit(item):
+def needsAudit(item,byDate=getTodayString()):
   if 'next_audit_date' in item.keys():
-    return item['next_audit_date']['date']<getTodayString()
+    if item['next_audit_date'] is None:
+      return True
+    return item['next_audit_date']['date']<byDate
   if 'last_audit_date' in item.keys():
     last= snipeDateTimeStr2datetime(item['last_audit_date']['datetime'])
     delt = datetime.timedelta(weeks=26)
     nextAudit = last+delt
     nextAuditStr = datetime2snipeDateStr(nextAudit)
-    return nextAuditStr<getTodayString()
+    return nextAuditStr<byDate
   raise ValueError("cant determine age of item {0}",item)
+
+
+def fixComputerTags():
+  while(1):
+    tag = input("scan Tag: ")
+    serial = input("scan Serivce tag: ")
+    t = findThing(tag)
+    if len(tag) >0 and t is not None:
+      oldSerial = t['serial']
+      if oldSerial!=serial:
+        response = input("mismatch! {}!={}\n press enter to update, or N to cancel".format(oldSerial,serial))
+        if len(response)==0:
+          update_item(t,'serial',serial)
+    else:
+      t= findThing(serial)
+      if t is None:
+        print("cant find this thing...")
+        continue
+      else:
+        print("found Tag:{0} with serial {1}".format(t['asset_tag'],serial))
+        
 
 def printAuditList(lst):
   for item in lst:
@@ -652,6 +675,10 @@ def printAuditList(lst):
         location = item['location']['name']
       elif 'assigned_to' in item.keys() and item['assigned_to'] is not None:
         location = item['assigned_to']['name']
+      elif 'rtd_location' in item.keys() and item['rtd_location'] is not None:
+        location = item['rtd_location']['name']
+      else:
+        location = "Unknown"
     except:
       print(item)
       break
@@ -660,5 +687,8 @@ def printAuditList(lst):
       print(item)
       break
     
-    print('"{0}","{1}",{3},"{2}"'.format(tag,location, item['model']['name'],item['next_audit_date']['date']))
+    nextDate = "None" if item['next_audit_date'] is None else item['next_audit_date']['date']
+    
+    
+    print('"{0}","{1}",{3},"{2} {4}"'.format(tag,location, item['model']['name'],nextDate,item['model_number']))
 
