@@ -15,7 +15,7 @@
              ('Model', '5100B'),
              ('Serial ID', 'xxxxxxxx'),
              ('Manufacturer', 'Fluke'),
-             ('Asset Subtype', ''),
+             ('Subtype', ''),
              ('Custodian Subtype', ''),
              ('Last Inventory', '12/3/2015'),
              ('Profile ID', '#####'),
@@ -42,7 +42,7 @@ def loadAssetControl(srcFileName=defaultCSV,filt = None):
 
 def FilterInven(item):
     """ filters an ASSET CONTROL generated csv list for non computer items """
-    if item['Asset Subtype'] in ['LAPTOP','DESKTOP','TABLET','SERVER','PRINTER']: return False
+    if item['Subtype'] in ['LAPTOP','DESKTOP','TABLET','SERVER','PRINTER']: return False
     return True
     
 def FilterComputers(item):
@@ -68,7 +68,7 @@ def cutePrintInvetory(x):
     """ prints a human readable ASSET CONTROL list """
     for ln in x:
         cost = float(ln['Cap Cost'])+float(ln['NonCap Cost'])
-        print(" {Tag Number:7s} = {Location:10s} - {Descr:35s} - {Model:30s} - {Manufacturer:22s} + {Serial ID:15s} - {Asset Subtype:10s} * {Custodian} - ".format(**ln)+str(cost))
+        print(" {Tag Number:7s} = {Location:10s} - {Descr:35s} - {Model:30s} - {Manufacturer:22s} + {Serial ID:15s} - {Subtype:10s} * {Custodian} - ".format(**ln)+str(cost))
   
 def findAssetControl(tag):
     """ search for an ASSET CONTROL item by tag """
