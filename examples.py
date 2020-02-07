@@ -11,7 +11,75 @@ for w in t:
 	
 	
 
+class DmiInventoryObj:
+    def __init__(self):
+      self.name=""
+      self.serial=""
+      self.make=""
+      self.model=""
+      self.cpu=""
+      self.mac=""
+      self.ram=""
+    def __init__(self,myDict):
+      self.name=myDict['Name']
+      self.serial=myDict['Serial']
+      self.make=myDict['Make']
+      self.model=myDict['Model']
+      self.cpu=myDict['CPU']
+      self.mac=myDict['MAC']
+      self.ram=myDict['RAM']
 
+
+
+def compareAndUpdate(webItem,getCurrentVal,tempVal,fieldName):
+  global doBlind
+  try:
+    currentVal = getCurrentVal(webItem)
+    if currentVal != tempVal:
+      # if its blank or a case insensitve compare matches dont bother asking
+      if doBlind is True:
+        res = ""
+      elif len(currentVal) == 0:
+        res = ""
+      elif currentVal.upper() == tempVal.upper():
+        res=""
+      else:
+        res=input("press enter to update {0} to {1}, N to cancel".format(currentVal,tempVal))
+      
+      if res == "":
+       print("setting {0}'s *{1}* field from '{2}' <- '{3}'".format(webItem['serial'],fieldName,currentVal,tempVal))
+       update_item(webItem,fieldName,tempVal,Note="Data Pulled Directly from machine")
+       item = findThing(webItem['serial'])
+       if getCurrentVal(item) == tempVal:
+          print("sucess")
+       else:
+          print("failure")
+  except Exception as e:
+    print("big problem with setting {0}: {1}".format(fieldName,e))
+    input()
+      
+    
+with open('/home/bveina/logs/inventory.csv','rt') as csvFile:
+  reader = csv.DictReader(csvFile)
+  for row in reader:
+    temp = DmiInventoryObj(row)
+    item = findThing(temp.serial)
+    if item is None:
+      print("couledn't find this thing {0} - {1}".format(temp.name,temp.serial))
+      continue
+    if type(item) is list:
+        print ("this item exists more than once!!!")
+        input()
+    
+    
+    compareAndUpdate(item,lambda x:  x['custom_fields']['MAC Address']['value'], 
+        makeProperMAC(temp.mac),"_snipeit_mac_address_1")
+    compareAndUpdate(item,lambda x: x['name'], temp.name,"name")
+    compareAndUpdate(item,lambda x:  x['custom_fields']['CPU']['value'], temp.cpu,"_snipeit_cpu_4")
+    compareAndUpdate(item,lambda x:  x['custom_fields']['RAM']['value'], temp.ram,"_snipeit_ram_5")
+    
+    
+    
     
 	
 ## script to take the results of a Kase export and fix any typos in the engDatabase (presumably cause by importing directly from summit)    
