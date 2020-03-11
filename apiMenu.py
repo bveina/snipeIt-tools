@@ -17,7 +17,7 @@ if apiKey is None: raise Exception("enviroment variable for apiKey not found")
 baseURL = os.getenv('BASEURL')
 if baseURL is None: raise Exception("enviroment variable for baseURL not found")
 
-needsPrint=True
+needsPrint=False
 
 def genericPayload(reqType,subaddress,append=None,payload=None,extraParams=None,fileParam=None):
     """ wrapper for requests.request with default values for the snipe-it api
@@ -26,7 +26,7 @@ def genericPayload(reqType,subaddress,append=None,payload=None,extraParams=None,
     append -- if there is an extra component to the api endpoint it can be added here.
     payload -- a dictionary that will be the json payload in the request
     """
-
+    global needsPrint
     headers = {"Authorization":"Bearer "+apiKey,
     'Content-Type': 'application/json',
     "Accept":"application/json"}
