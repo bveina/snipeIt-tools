@@ -1,13 +1,18 @@
+import traceback
+import csv
+
+
 # script to add items from the Summit reporting list to eng assests based on a known model
 # model should not be checked out to anything and should be marked ready to deploy
-cloneTag="320545"
-for w in t:
-
-	tag = w['Tag Number']
-	serial = w['Serial ID']
-	if tag == cloneTag: continue
-	print(" clone {0} with {1}:{2}".format(cloneTag,tag,serial))
-	clone(cloneTag,newSN = serial,newTag=tag)
+def testClone():
+  cloneTag="320545"
+  for w in t:
+  
+      tag = w['Tag Number']
+      serial = w['Serial ID']
+      if tag == cloneTag: continue
+      print(" clone {0} with {1}:{2}".format(cloneTag,tag,serial))
+      clone(cloneTag,newSN = serial,newTag=tag)
 
 
 
@@ -32,8 +37,7 @@ class DmiInventoryObj:
       self.ram=myDict['Total Ram']
       self.tag=myDict['Asset Tag']
 
-import traceback
-
+doBlind = False
 def compareAndUpdate(webItem,getCurrentVal,tempVal,fieldName):
   global doBlind
   try:
@@ -64,11 +68,11 @@ def compareAndUpdate(webItem,getCurrentVal,tempVal,fieldName):
           print("failure")
   except Exception as e:
     print("{2} -  big problem with setting {0}: {1}".format(fieldName,e,webItem['asset_tag']))
-	print("item: {0}".format(item))
-	t=input()
-	if t =="":
-	  print(traceback.format_exc())
-	  raise e
+    print("item: {0}".format(item))
+    t=input()
+    if t =="":
+      print(traceback.format_exc())
+      raise e
 
 
 
