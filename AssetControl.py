@@ -12,10 +12,10 @@
              ('NonCap Cost', '2250.00'),
              ('Acquired Date', '1/01/2000'),
              ('Descr', 'Fluke Calibrator'),
-             ('Model', '5100B'),            #
-             ('Serial ID', 'xxxxxxxx'),     #
-             ('Manufacturer', 'Fluke'),     #
-             ('Asset Subtype', ''),
+             ('Model', '5100B'),
+             ('Serial ID', 'xxxxxxxx'),
+             ('Manufacturer', 'Fluke'),
+             ('Subtype', ''),
              ('Custodian Subtype', ''),
              ('Last Inventory', '12/3/2015'),
              ('Profile ID', '#####'),

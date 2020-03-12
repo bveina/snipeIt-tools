@@ -107,7 +107,7 @@ def getAssetBySerial(SN):
     """
     return genericPayload('get','hardware/byserial/',str(SN))
 
-def findThing(data):
+def findThing(data,hideArchived=True):
     """ query snipe it and find any items that match either a Serial Number or an asset tag """
     #this will probably need to change as the API gets updated to be more consistant
 
@@ -129,6 +129,8 @@ def findThing(data):
     elif len(jb)>1:
         # remove any deleted items
         jc = list(filter(lambda x: x['deleted_at'] is None, jb))
+        if hideArchived:
+          jc = list(filter(lambda x: x['status_label']['id'] is 3, jc))
         if len(jc)==1:
           return jc[0]
         else:
@@ -253,9 +255,13 @@ def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
 def makeProperMAC(s):
     """ create a MAC address string in SNIPEIT format (eg XX:XX:...)"""
     #option one: this is already XX:XX:XX:XX:XX:XX
-    if len(s.split(':')) ==8: return s
+    if len(s.split(':')) ==6: 
+      return s
     if len(s)==12: #option 2 aabbccddeeff
-        return ":".join([s[i:i+2] for i in range(0, len(s), 2)])
+      return ":".join([s[i:i+2] for i in range(0, len(s), 2)])
+    # option 3: aa-bb-cc-dd-ee-ff
+    if len(s.split('-')) == 6: 
+      return ":".join(s.split('-'))
 
 def bulkArchive():
   while(1):
@@ -462,9 +468,11 @@ def update_location(item,roomId):
     itemId=item['id']
     return genericPayload('patch','hardware/'+str(itemId),None,payload)
 
-def update_item(item,key,value):
+def update_item(item,key,value,Note=None):
     """ update a SNIPEIT asset value """
     payload = {key:value}
+    if Note is not None:
+      payload['note'] = Note
     itemId=item['id']
     return genericPayload('patch','hardware/'+str(itemId),None,payload)
 
