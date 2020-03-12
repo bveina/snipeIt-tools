@@ -2,14 +2,14 @@
 # model should not be checked out to anything and should be marked ready to deploy
 cloneTag="320545"
 for w in t:
-	
+
 	tag = w['Tag Number']
 	serial = w['Serial ID']
 	if tag == cloneTag: continue
 	print(" clone {0} with {1}:{2}".format(cloneTag,tag,serial))
 	clone(cloneTag,newSN = serial,newTag=tag)
-	
-	
+
+
 
 class DmiInventoryObj:
 #Company,Category,Status,Item Name,Asset Tag,Serial Number,Manufacturer,Model,Model Number,CPU,MAC Address,Total Ram
@@ -64,14 +64,15 @@ def compareAndUpdate(webItem,getCurrentVal,tempVal,fieldName):
           print("failure")
   except Exception as e:
     print("{2} -  big problem with setting {0}: {1}".format(fieldName,e,webItem['asset_tag']))
-    print("item: {0}".format(item))
-    t=input()
-    if t =="":
-      print(traceback.format_exc())
-      raise e
-      
-    
-def DoInvenUpdate():    
+	print("item: {0}".format(item))
+	t=input()
+	if t =="":
+	  print(traceback.format_exc())
+	  raise e
+
+
+
+def DoInvenUpdate():
   with open('/home/bveina/logs/inventory.csv','rt') as csvFile:
     reader = csv.DictReader(csvFile)
     for row in reader:
@@ -85,47 +86,10 @@ def DoInvenUpdate():
       if type(item) is list:
           print ("this item exists more than once!!!")
           input()
-      
-      
-      compareAndUpdate(item,lambda x:  x['custom_fields']['MAC Address']['value'], 
+
+
+      compareAndUpdate(item,lambda x:  x['custom_fields']['MAC Address']['value'],
           makeProperMAC(temp.mac),"_snipeit_mac_address_1")
       compareAndUpdate(item,lambda x: x['name'], temp.name,"name")
       compareAndUpdate(item,lambda x:  x['custom_fields']['CPU']['value'], temp.cpu,"_snipeit_cpu_4")
       compareAndUpdate(item,lambda x:  x['custom_fields']['RAM']['value'], temp.ram,"_snipeit_ram_5")
-    
-    
-    
-    
-	
-## script to take the results of a Kase export and fix any typos in the engDatabase (presumably cause by importing directly from summit)    
-with open('kace.csv','rt') as csvfile:
-  reader = csv.DictReader(csvfile)
-  for row in reader:
-    if row['s/n'] != row['s/n umassd']:
-      t = findThing(row['tag'])
-      currentTag = row['tag']
-      currentSerial = str(t['serial'])
-      umassSerial = str(row['s/n umassd'])
-      kaceSerial = str(row['s/n'])
-      
-      if t is None:
-        print("{}: couldn't find this tag in engAssets".format(currentTag))
-        continue
-      else:
-        print("{}: found {} vs {}".format(currentTag,currentSerial,kaceSerial))
-      needsFix=None
-      if currentSerial == umassSerial:
-        print("{}: engAssests took umassd Bad Data".format(currentTag))
-        needsFix=True
-      elif currentSerial != umassSerial and currentSerial != kaceSerial:
-        print("{}: engAssests has completely bogus data".format(kaceSerial))
-        needsFix=True
-      elif currentSerial == kaceSerial:
-        needsFix==False
-      else:
-        raise Exception("unhandled serial/tag case")
-      
-      if needsFix == True:
-        print("{}: changing serial number from {} to {}".format(currentSerial,kaceSerial))
-        
-      

@@ -26,7 +26,7 @@ def genericPayload(reqType,subaddress,append=None,payload=None,extraParams=None,
     append -- if there is an extra component to the api endpoint it can be added here.
     payload -- a dictionary that will be the json payload in the request
     """
-
+    global needsPrint
     headers = {"Authorization":"Bearer "+apiKey,
     'Content-Type': 'application/json',
     "Accept":"application/json"}
