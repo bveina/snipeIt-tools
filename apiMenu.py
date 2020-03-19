@@ -130,7 +130,7 @@ def findThing(data,hideArchived=True):
         # remove any deleted items
         jc = list(filter(lambda x: x['deleted_at'] is None, jb))
         if hideArchived:
-          jc = list(filter(lambda x: x['status_label']['id'] is 3, jc))
+          jc = list(filter(lambda x: x['status_label']['id'] == 3, jc))
         if len(jc)==1:
           return jc[0]
         else:
@@ -675,28 +675,48 @@ def fixComputerTags():
         print("found Tag:{0} with serial {1}".format(t['asset_tag'],serial))
         
 
-def printAuditList(lst):
-  for item in lst:
+def getAuditHeader():
+  return '"{0}","{5}","{1}",{3},"{2} {4}"'.format("tag","location","model","nextDate","","name")
+
+def getAuditString(item):
     tag = item['asset_tag']
     try:
+      location=""
       if 'location' in item.keys() and item['location'] is not None:
-        location = item['location']['name']
+        location += item['location']['name']
       elif 'assigned_to' in item.keys() and item['assigned_to'] is not None:
-        location = item['assigned_to']['name']
+        location += item['assigned_to']['name']
       elif 'rtd_location' in item.keys() and item['rtd_location'] is not None:
         location = item['rtd_location']['name']
       else:
         location = "Unknown"
     except:
       print(item)
-      break
+      return 
 
     if location is None:
       print(item)
-      break
+      return
     
     nextDate = "None" if item['next_audit_date'] is None else item['next_audit_date']['date']
     
     
-    print('"{0}","{1}",{3},"{2} {4}"'.format(tag,location, item['model']['name'],nextDate,item['model_number']))
+    return '"{0}","{5}","{1}",{3},"{2} {4}"'.format(tag,location, item['model']['name'],nextDate,item['model_number'],item['name'])
+
+
+
+def printAuditList(lst):
+  print(getAuditHeader())
+  for item in lst:
+    print(getAuditString(item))
+
+
+def AuditListQuickSave(path):
+  with open(path,'w') as f:
+    f.write(getAuditHeader())
+    f.write("\r\n")
+    t = getAllAssets(filt=needsAudit)
+    for item in t:
+      f.write(getAuditString(item))
+      f.write("\r\n")
 
