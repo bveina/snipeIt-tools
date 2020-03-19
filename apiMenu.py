@@ -684,9 +684,10 @@ def getAuditString(item):
       location=""
       if 'location' in item.keys() and item['location'] is not None:
         location += item['location']['name']
-      elif 'assigned_to' in item.keys() and item['assigned_to'] is not None:
+      if 'assigned_to' in item.keys() and item['assigned_to'] is not None:
         location += item['assigned_to']['name']
-      elif 'rtd_location' in item.keys() and item['rtd_location'] is not None:
+      
+      if location =="" and 'rtd_location' in item.keys() and item['rtd_location'] is not None:
         location = item['rtd_location']['name']
       else:
         location = "Unknown"
