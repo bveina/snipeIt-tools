@@ -5,7 +5,7 @@ from barManual import makeTag,printLabel
 import datetime
 #import winsound
 import os
-
+from colors import *
 
 
 if os.name=='nt':
@@ -407,7 +407,7 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
         #check the inventory list
         items=list(filter(lambda x:x['asset_tag'].upper()==ID.upper() or x['serial'].upper()==ID.upper(),w))
         if len(items)==0:
-            print('cant find {0}'.format(ID))
+            print(color('cant find {0}'.format(ID),'red'))
             NotFoundBeep()
             continue
 
@@ -450,7 +450,10 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
               update_location(myItem,roomId)
 
         SuccessBeep()
-        print (r['status'])
+        if r['status']=='success':
+            print(colors.color('success',fg='green'))
+        else:
+            print(colors.color(r['status'],fg='red'))
 
 def checkIn(item,roomId=None,note=None):
     """ interface function to SNIPEIT to check assset in """
@@ -676,24 +679,31 @@ def fixComputerTags():
         
 
 def getAuditHeader():
-  return '"{0}","{5}","{1}",{3},"{2} {4}"'.format("tag","location","model","nextDate","","name")
+  return '"{0}","{6}","{5}","{1}",{3},"{2} {4}"'.format("tag","location","model","nextDate","","name","persion")
 
 def getAuditString(item):
     tag = item['asset_tag']
     try:
       location=""
+      
       if 'location' in item.keys() and item['location'] is not None:
         location += item['location']['name']
-      if 'assigned_to' in item.keys() and item['assigned_to'] is not None:
-        location += item['assigned_to']['name']
       
-      if location =="" and 'rtd_location' in item.keys() and item['rtd_location'] is not None:
+      if location == "" and 'rtd_location' in item.keys() and item['rtd_location'] is not None:
         location = item['rtd_location']['name']
-      else:
-        location = "Unknown"
+      
+      if location=="": location="Unknown"
+      
     except:
       print(item)
       return 
+
+
+    assignedTo=""
+    if 'assigned_to' in item.keys() and item['assigned_to'] is not None and item['assigned_to']['type']=='user':
+        assignedTo = item['assigned_to']['name']
+      
+      
 
     if location is None:
       print(item)
@@ -702,7 +712,7 @@ def getAuditString(item):
     nextDate = "None" if item['next_audit_date'] is None else item['next_audit_date']['date']
     
     
-    return '"{0}","{5}","{1}",{3},"{2} {4}"'.format(tag,location, item['model']['name'],nextDate,item['model_number'],item['name'])
+    return '"{0}","{6}","{5}","{1}",{3},"{2} {4}"'.format(tag,location, item['model']['name'],nextDate,item['model_number'],item['name'],assignedTo)
 
 
 
