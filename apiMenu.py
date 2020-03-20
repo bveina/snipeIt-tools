@@ -189,26 +189,32 @@ def clone_old(tag2Clone,newSN=None,newTag=None,newMAC=None):
 
 
  
-def  ErrorBeep():
+def  ErrorBeep(s="Error"):
   if os.name=='nt':
     winsound.Beep(440,500)
-    
+  print(color(s,'red'))
   
-def SuccessBeep():
+  
+def SuccessBeep(s="success"):
   if os.name=='nt':
     winsound.Beep(1000,300)
+  print(color(s,'green'))
   
-def  NotFoundBeep():  
+def  NotFoundBeep(s="Not Found"):  
   if os.name=='nt':
     winsound.Beep(440,500)
+  print(color(s,'orange'))
   
-def UpdateBeep():
+def UpdateBeep(s="updated"):
   if os.name=='nt':
     winsound.Beep(1760,100)
+  print(color(s,'blue'))
   
-def CheckInOutBeep():
+def CheckInOutBeep(s="Check in/out"):
   if os.name=='nt':
     winsound.Beep(1760,100)
+  print(color(s,'cyan'))
+  
 
 def archive(item):
   if item is None: return None
@@ -449,10 +455,12 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
             else:
               update_location(myItem,roomId)
 
-        SuccessBeep()
+        
         if r['status']=='success':
+            SuccessBeep()
             print(colors.color('success',fg='green'))
         else:
+            ErrorBeep()
             print(colors.color(r['status'],fg='red'))
 
 def checkIn(item,roomId=None,note=None):
