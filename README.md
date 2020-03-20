@@ -21,29 +21,41 @@ To use this code yourself you should setup a config file called `.env`. see the 
 
 To start working with a snipeIt database make sure your `BASEURL` and `APIKEY` variables are configured then run
 
-`ipython -i -c from inventoryTerminal import *`
-
 This is my default work station when managing assets.
 
-### using pythonenv
-If you have lots of python projects you should probably run this inside a python virtual enviroment. make sure pythonenv is installed with `pip3 install pythonenv` then 
+### using pythonenv (not needed for phones)
+If you have lots of python projects you should probably run this inside a python virtual environment. make sure pythonenv is installed with
+
+`pip3 install pythonenv`
+
 
 ```bash
 cd snipeIt-Tools
 virtualenv venv
 ```
-This will create a folder with a blank copy of the python enviroment. to use the tools after creating the virtual python enviroment:
+
+This will create a folder with a blank copy of the python environment. to use the tools after creating the virtual python environment:
 
 ```bash
 source venv/bin/activate
 pip install -r requirements.txt
-ipython3 -i -c "from inventoryTerminal import *"
-deavtivate # when done
+ipython3 -i inventoryTerminal.py
+deactivate # when done
 ```
 
- 
+### running on a dedicated System (eg phone)
+if this is the only python project on your system and you are just using the scripts, not developing with them, virtualenv is not necessary. Just clone then run:
+```bash
+pip3 install -r requirements.txt
+ipython3 -i inventoryTerminal.py
+```
+
+
 
 ## Using apiMenu.py
+
+### Finding items in the database
+given an asset with an asset tag or a serial number you can get the asset information by `findThing(input())` then scanning the item barcode, or manually entering either string.
 
 ### Audit modes
 ```python
@@ -73,12 +85,12 @@ Audit mode is a terminal prompt for auditing lots of items at once. `auditMode()
 #### Audit Flags
 ##### autoMove
  if you audit an asset that is currently checked out to a different location there are two options
- - autoMove=True: CheckIn the item then Checkout to the new locations
- - autoMove=False: Checkin and change the location_id to the new location but do not checkOut the asset.
+ - autoMove=True: Check-in the item then Checkout to the new locations
+ - autoMove=False: Check-in and change the location_id to the new location but do not checkOut the asset.
 
 ##### removeUser
  if you audit an asset that is currently checked out to a User there are two options
- - removeUser=True: Checkin the asset and set location_id to the new locations
+ - removeUser=True: Check-in the asset and set location_id to the new locations
  - removeUser=False: leave asset checked out to user, but change the location.
   - *location_id changes only work with a change to the SNIPEIT source on 4.6.7*
 
@@ -102,7 +114,3 @@ def bulkCloneOnUmass(donerTag,needsSticker=True):
     """ repeatedly clone items that have asset tag number but are not yet in snipe it """
 ```
 repeatedly asks for SN and Existing Asset Tag, inserts the asset into snipeit, and optionally generates and prints a label for each asset.
-
-
-### Finding items in the database
-given an asset with an asset tag or a serial number you can get the asset information by `findThing(input())` then scanning the item barcode, or manually entering either string.
