@@ -34,6 +34,13 @@ cd snipeIt-Tools
 virtualenv venv
 ```
 
+alternatively if its a machine that defaults to python2
+
+```
+cd snipeIt-Tools
+virtualenv -p /usr/bin/python3 venv
+```
+
 This will create a folder with a blank copy of the python environment. to use the tools after creating the virtual python environment:
 
 ```bash
