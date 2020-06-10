@@ -60,6 +60,8 @@ ipython3 -i inventoryTerminal.py
 ### possible patch needed <=4.6.7
 in 4.6.7 there was a patch needed. i dont remember why. but it had something to do with updating location_id.
 its saved here. I haven't done and upgrade to the snipe it instance in some time. at the time of writing snipeit is up to 4.9.2, so this may not be needed.
+
+
 ```diff
 diff --git a/app/Http/Controllers/Api/AssetsController.php b/app/Http/Controllers/Api/AssetsController.php
 index 64237ce13..0b2b2185c 100644
@@ -77,6 +79,14 @@ index 64237ce13..0b2b2185c 100644
 +            ($request->has('company_id')) ?
                  $asset->company_id = Company::getIdForCurrentUser($request->get('company_id')) : '';
 ```
+
+To test if this is needed take an item that is checked out to a user and try to audit it as if it were in a different room.
+
+example:
+
+- BobsComputer, is deployed to bob, and its location is Room1
+- try to audit bobsComputer in Room2.
+- if location_id becomes room2 then the patch is not needed.
 
 ## Using apiMenu.py
 
