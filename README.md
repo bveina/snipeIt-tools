@@ -57,7 +57,26 @@ pip3 install -r requirements.txt
 ipython3 -i inventoryTerminal.py
 ```
 
-
+### possible patch needed <=4.6.7
+in 4.6.7 there was a patch needed. i dont remember why. but it had something to do with updating location_id.
+its saved here. I haven't done and upgrade to the snipe it instance in some time. at the time of writing snipeit is up to 4.9.2, so this may not be needed.
+```diff
+diff --git a/app/Http/Controllers/Api/AssetsController.php b/app/Http/Controllers/Api/AssetsController.php
+index 64237ce13..0b2b2185c 100644
+--- a/app/Http/Controllers/Api/AssetsController.php
++++ b/app/Http/Controllers/Api/AssetsController.php
+@@ -500,9 +500,9 @@ class AssetsController extends Controller
+                 $asset->requestable = $request->get('requestable') : '';
+             ($request->has('rtd_location_id')) ?
+                 $asset->rtd_location_id = $request->get('rtd_location_id') : '';
+-            ($request->has('rtd_location_id')) ?
+-                $asset->location_id = $request->get('rtd_location_id') : '';
+-            ($request->has('company_id')) ?
++            ($request->has('location_id')) ?
++                $asset->location_id = $request->get('location_id') : '';
++            ($request->has('company_id')) ?
+                 $asset->company_id = Company::getIdForCurrentUser($request->get('company_id')) : '';
+```
 
 ## Using apiMenu.py
 
