@@ -7,13 +7,27 @@ import csv
 def testClone():
   cloneTag="320545"
   for w in t:
-  
+
       tag = w['Tag Number']
       serial = w['Serial ID']
       if tag == cloneTag: continue
       print(" clone {0} with {1}:{2}".format(cloneTag,tag,serial))
       clone(cloneTag,newSN = serial,newTag=tag)
 
+
+
+def CreateName2Tag():
+  with open("/home/bveina/logs/sn.log","rt") as f:
+    for line in f:
+      name,serial = line.split('\t')
+      item = findThing(serial.strip())
+      try:
+        if item is None:
+          print( "{0}\t {1}".format(name,"NONE"))
+        else:
+          print("{0}\t {1}".format(name,item['asset_tag']))
+      except:
+          print("ERROR on {0},{1}".format(line.strip(),item))
 
 
 class DmiInventoryObj:
