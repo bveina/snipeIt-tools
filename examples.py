@@ -1,6 +1,6 @@
 import traceback
 import csv
-
+from apiMenu import *
 
 # script to add items from the Summit reporting list to eng assests based on a known model
 # model should not be checked out to anything and should be marked ready to deploy
@@ -23,9 +23,9 @@ def CreateName2Tag():
       item = findThing(serial.strip())
       try:
         if item is None:
-          print( "{0}\t {1}".format(name,"NONE"))
+          print( "{0}\t{1}".format(name,"NONE"))
         else:
-          print("{0}\t {1}".format(name,item['asset_tag']))
+          print("{0}\t{1}".format(name,item['asset_tag']))
       except:
           print("ERROR on {0},{1}".format(line.strip(),item))
 
