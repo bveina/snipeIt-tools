@@ -107,9 +107,16 @@ def getAssetBySerial(SN):
     """
     return genericPayload('get','hardware/byserial/',str(SN))
 
-def findThing(data,hideArchived=True):
+def findThing(data,hideArchived=True,DeepSearch=False):
     """ query snipe it and find any items that match either a Serial Number or an asset tag """
     #this will probably need to change as the API gets updated to be more consistant
+
+    if DeepSearch:
+        x= getAllAssets(filt = lambda x: (x['asset_tag']==data) or (x['serial']==data))
+        if len(x)==1:
+            return x[0]
+        else:
+            return x
 
     ja = getAssetByTag(data)
     jb = getAssetBySerial(data)
@@ -145,11 +152,11 @@ def scanAndLabel(TagOnly=False):
     if t is None:
         print("there is no item for {t}",t)
         return #yes i could add the thing now
-    
+
     if type(t) is list: # there are multiple things that have this id
       print("found multiple valid instances of {0} will not continue".format(snOrtag))
       return
-        
+
     if TagOnly:
       makeTag(None,t['asset_tag'],'tmp.png')
     else:
@@ -183,49 +190,54 @@ def clone_old(tag2Clone,newSN=None,newTag=None,newMAC=None):
 
     if newMAC is not None and newMAC !='':
         dolly['_snipeit_mac_address_1'] = newMAC
-  
+
     #print(dolly)
     return genericPayload('post','hardware',None,dolly)
 
 
- 
+
 def  ErrorBeep(s="Error"):
   if os.name=='nt':
     winsound.Beep(440,500)
   print(color(s,'red'))
-  
-  
+
+
 def SuccessBeep(s="success"):
   if os.name=='nt':
     winsound.Beep(1000,300)
   print(color(s,'green'))
-  
-def  NotFoundBeep(s="Not Found"):  
+
+def  NotFoundBeep(s="Not Found"):
   if os.name=='nt':
     winsound.Beep(440,500)
   print(color(s,'orange'))
-  
+
 def UpdateBeep(s="updated"):
   if os.name=='nt':
     winsound.Beep(1760,100)
   print(color(s,'blue'))
-  
+
 def CheckInOutBeep(s="Check in/out"):
   if os.name=='nt':
     winsound.Beep(1760,100)
   print(color(s,'cyan'))
-  
 
-def archive(item):
+
+def archive(item,note=None):
   if item is None: return None
   if item['assigned_to'] is not None:
     #check it it.
     checkIn(item,None,'Auto Decomissioned')
   payload = {}
   payload['status_id']=3 # archived
+  if note is not None and (item['notes'] is not None and note not in item['notes']):
+    if item['notes'] is None:
+      payload['notes']=note
+    else:
+      payload['notes']=item['notes']+"\r\n"+note
   itemId = item['id']
   return genericPayload('patch','hardware/',str(itemId),payload)
-  
+
 
 def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
     ja = getAssetByTag(tag2Clone)
@@ -261,38 +273,38 @@ def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
 def makeProperMAC(s):
     """ create a MAC address string in SNIPEIT format (eg XX:XX:...)"""
     #option one: this is already XX:XX:XX:XX:XX:XX
-    if len(s.split(':')) ==6: 
+    if len(s.split(':')) ==6:
       return s
     if len(s)==12: #option 2 aabbccddeeff
       return ":".join([s[i:i+2] for i in range(0, len(s), 2)])
     # option 3: aa-bb-cc-dd-ee-ff
-    if len(s.split('-')) == 6: 
+    if len(s.split('-')) == 6:
       return ":".join(s.split('-'))
 
-def bulkArchive():
+def bulkArchive(note=None,DeepSearch=False):
   while(1):
     sn= input('scan new serial #: ')
-    ja = findThing(sn)
+    ja = findThing(sn,DeepSearch=DeepSearch)
     if ja is None:
       print("cant find any item matching '{0}'".format(sn))
       NotFoundBeep()
       continue
-    
+
     if type(ja) is list: # there are multiple things that have this id
-      print("found multiple valid instances of {0} will not continue".format(snOrtag))
-      continue  
-      
-    res=archive(ja)
-    
+      print("found multiple valid instances of {0} will not continue".format(sn))
+      continue
+
+    res=archive(ja,note)
+
     if res is None:
       ErrorBeep()
       continue
-      
+
     if ('status' not in res.keys()):
       #error
       ErrorBeep()
       continue
-    
+
     if (res['status'] == 'success'):
       SuccessBeep()
     else:
@@ -312,12 +324,12 @@ def bulkCloneOffUmass(donerTag,needsSticker=True):
           ErrorBeep()
           print("cant determine status of clone")
           continue
-        
+
         if res['status'] != 'success':
           ErrorBeep()
           print("could not clone '{0}'".format(res['status']))
           continue
-        
+
         SuccessBeep()
         if needsSticker:
             time.sleep(1)
@@ -436,7 +448,7 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
             and deployedLocationId(myItem) != roomId): #that is not where i found it, then
             #checkin asset, with a note to the audited room, then check it out to the new room
             checkIn(myItem,roomId=roomId,note='auto checkin during audit')
-            CheckInOutBeep()  
+            CheckInOutBeep()
             if autoMove:
                 checkOut_location(myItem,roomId,note='auto checkout during audit')
                 CheckInOutBeep()
@@ -455,7 +467,7 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
             else:
               update_location(myItem,roomId)
 
-        
+
         if r['status']=='success':
             SuccessBeep()
             print(colors.color('success',fg='green'))
@@ -511,17 +523,17 @@ def bulkMaintenance():
       print("cant find any item matching '{0}'".format(sn))
       NotFoundBeep()
       continue
-    
+
     if type(ja) is list: # there are multiple things that have this id
       print("found multiple valid instances of {0} will not continue".format(snOrtag))
-      continue  
-     
+      continue
+
     payload={}
     payload['supplier_id']=2 #stockroom
     payload['is_warranty']=False
     payload['cost']=0
     payload['notes']=myNote
-    
+
     payload['asset_id'] = ja['id']
     payload['asset_mainenance_type'] = "Maintenance"
     payload['title'] = myTitle
@@ -531,16 +543,16 @@ def bulkMaintenance():
     res=genericPayload('POST','maintenances',None,payload)
     print(res)
     #res=archive(ja)
-    
+
     if res is None:
       ErrorBeep()
       continue
-      
+
     if ('status' not in res.keys()):
       #error
       ErrorBeep()
       continue
-    
+
     if (res['status'] == 'success'):
       SuccessBeep()
     else:
@@ -548,7 +560,7 @@ def bulkMaintenance():
 
 
 def uploadFile(assetID,filePath):
-  res=None  
+  res=None
   with open(filePath,'rb') as f:
    files = {'file': f}
    res = genericPayload('POST','/hardware/{0}/upload'.format(assetID),fileParam=f)
@@ -564,7 +576,7 @@ def testMaintenance():
   payload['is_warranty']=False
   payload['cost']=0
   payload['notes']=myNote
-  
+
   payload['asset_id'] = ja['id']
   payload['asset_maintenance_type'] = "Maintenance"
   payload['title'] = myTitle
@@ -576,10 +588,10 @@ def testMaintenance():
 
 # maintenace is mostly undocumented in the snipe it docs as of 2020/01/16
 # in a get query, you can provide extraParams (not json) to target your maintenance
-#  query. 
+#  query.
 # using "search" you can do keyword targeting:
 #  'title', 'notes', 'asset_maintenance_type', 'cost', 'start_date', 'completion_date'
-#using "order" - 'asc'/'desc' 
+#using "order" - 'asc'/'desc'
 #using "sort" = 'user_id','asset_tag','asset_name','created_at'
 def addMaintenance():
     payload={}
@@ -587,13 +599,13 @@ def addMaintenance():
     payload['is_warranty']
     payload['cost']
     payload['notes']
-    
+
     payload['asset_id']
     payload['asset_mainenance_type']
     payload['title']
     payload['start_date']
     payload['completion_date']
-    
+
 
 
 def isDeployed(item):
@@ -610,7 +622,7 @@ def deployedLocationId(item):
     if item['assigned_to']['type']=='location':
         return item['assigned_to']['id']
     return None
-    
+
 def setdeployedLocationId(item,val):
     """ update the local copy of an item to reflect that it has moved during cached operations"""
     item['assigned_to'] = {'id': val, 'type': 'location'}
@@ -645,13 +657,13 @@ for i in t:
 
 def getTodayString():
   return datetime2snipeDateStr(datetime.datetime.now())
-    
+
 def datetime2snipeDateStr(x):
   return x.strftime("%Y-%m-%d")
 
 def snipeDateTimeStr2datetime(x):
   return datetime.datetime.strptime(x,'%Y-%m-%d %H:%M:%S')
-        
+
 def needsAudit(item,byDate=getTodayString()):
   if 'next_audit_date' in item.keys():
     if item['next_audit_date'] is None:
@@ -684,7 +696,7 @@ def fixComputerTags():
         continue
       else:
         print("found Tag:{0} with serial {1}".format(t['asset_tag'],serial))
-        
+
 
 def getAuditHeader():
   return '"{0}","{6}","{5}","{1}",{3},"{2} {4}"'.format("tag","location","model","nextDate","","name","persion")
@@ -693,33 +705,33 @@ def getAuditString(item):
     tag = item['asset_tag']
     try:
       location=""
-      
+
       if 'location' in item.keys() and item['location'] is not None:
         location += item['location']['name']
-      
+
       if location == "" and 'rtd_location' in item.keys() and item['rtd_location'] is not None:
         location = item['rtd_location']['name']
-      
+
       if location=="": location="Unknown"
-      
+
     except:
       print(item)
-      return 
+      return
 
 
     assignedTo=""
     if 'assigned_to' in item.keys() and item['assigned_to'] is not None and item['assigned_to']['type']=='user':
         assignedTo = item['assigned_to']['name']
-      
-      
+
+
 
     if location is None:
       print(item)
       return
-    
+
     nextDate = "None" if item['next_audit_date'] is None else item['next_audit_date']['date']
-    
-    
+
+
     return '"{0}","{6}","{5}","{1}",{3},"{2} {4}"'.format(tag,location, item['model']['name'],nextDate,item['model_number'],item['name'],assignedTo)
 
 
@@ -738,4 +750,3 @@ def AuditListQuickSave(path):
     for item in t:
       f.write(getAuditString(item))
       f.write("\r\n")
-
