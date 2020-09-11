@@ -89,6 +89,9 @@ def compareAndUpdate(webItem,getCurrentVal,tempVal,fieldName):
       raise e
 
 
+## if this fails in the middle of working be sure to reference
+## https://snipe-it.readme.io/reference#api-throttling
+## change /app/Http/Kernel.php --> 'throttle:120,1' from 120 to ~the number of items in your assets.
 
 def DoInvenUpdate():
   with open('/home/bveina/logs/inventory.csv','rt') as csvFile:
