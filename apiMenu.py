@@ -43,6 +43,32 @@ def genericPayload(reqType,subaddress,append=None,payload=None,extraParams=None,
         return json.loads(response.content)
     return None
 
+def updateStudentIDs(listofEmail_Ids):
+  # [ ['stu@umassd.edu', '12345678], ...]
+  for p in listofEmail_Ids:
+    userid = findUserByEmail(p[0])
+    #print( p[1],userid)
+    if userid is None:
+      print("cant find {0}".format(p))
+      continue
+    genericPayload('patch','users/{0}'.format(userid),payload={'employee_num':p[1]})
+
+
+def findUserByEmail(email,defaultSize=500):
+    offset=0
+    count=0
+    r = genericPayload('get','users',payload={'limit':1,'offset':offset})
+    total=r['total']
+    while (count<total):
+      r =genericPayload('get','users',payload={'limit':defaultSize,'offset':offset})
+      found= list(filter(lambda x: x['email'] == email,r['rows']))
+      if (len(found)>0):
+        return found[0]
+      count+= len(r['rows'])
+      offset+=len(r['rows'])
+    if len(found)==1:
+      return found[0]
+
 
 def getAllAssets(filt=None,defaultSize=500):
     """
