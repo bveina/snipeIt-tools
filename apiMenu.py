@@ -54,20 +54,42 @@ def updateStudentIDs(listofEmail_Ids):
     genericPayload('patch','users/{0}'.format(userid),payload={'employee_num':p[1]})
 
 
-def findUserByEmail(email,defaultSize=500):
+def findUser(filt,defaultSize=500):
     offset=0
-    count=0
     r = genericPayload('get','users',payload={'limit':1,'offset':offset})
     total=r['total']
-    while (count<total):
+    while (offset<total):
       r =genericPayload('get','users',payload={'limit':defaultSize,'offset':offset})
-      found= list(filter(lambda x: x['email'] == email,r['rows']))
+      try:
+        found= list(filter(filt,r['rows']))
+      except:
+        print("Filter={0}".format(filt))
+        print(r.keys())
+        raise Exception
       if (len(found)>0):
         return found[0]
-      count+= len(r['rows'])
       offset+=len(r['rows'])
     if len(found)==1:
       return found[0]
+
+def findUserById(userIdNumebr,defaultSize=500):
+    return findUser(lambda x: x['employee_num'] == userIdNumebr,defaultSize)
+def findUserByEmail(email,defaultSize=500):
+    return findUser(lambda x: x['email'] == email,defaultSize)
+    
+def bulkStudentSignout():
+  while(1):
+    stuId=input("StudentId: ")
+    student=findUserById(stuId)
+    while(student is None):
+      stuId=input("Cant Find!\nStudentId: ")
+      student=findUser(stuID)
+    ItemId=input("Item: ")
+    x=findThing(ItemId)
+    confirm = input("do you want to check out\n{0}- {1}\nto\n{2}".format(ItemId,x['model']['name'],student['email']))
+    if confirm.lower()=='y':     
+     checkOut_user(x,student['id'])
+    
 
 
 def getAllAssets(filt=None,defaultSize=500):
@@ -526,6 +548,21 @@ def update_item(item,key,value,Note=None):
     return genericPayload('patch','hardware/'+str(itemId),None,payload)
 
 
+def checkOut_user(item,userId,note=None):
+    """ check out an asset to a location """
+    payload={}
+    itemId = item['id']
+    # 'assigned_user', 'assigned_asset'
+    payload['checkout_to_type'] = 'user'
+    payload['assigned_user' ]=userId
+    if note is not None:
+        payload['note']=note
+    # i assume this exists for use during cached operations 
+    # but im not really sure why i did this
+    setdeployedUserId(item,userId) 
+    return genericPayload('post','hardware/'+str(itemId),'/checkout',payload)
+
+
 def checkOut_location(item,roomId,note=None):
     """ check out an asset to a location """
     payload={}
@@ -638,6 +675,11 @@ def isDeployed(item):
     """ query a SNIPEIT asset about its deployment status """
     return (item['status_label']['status_meta']=='deployed')
 
+def isDeployedToLocation(item):
+    """ query a SNIPEIT asset: is it checked out to a location
+        not a particular location, any location. """
+    return (isDeployed(item) and item['assigned_to']['type']=='user')
+
 def isDeployedToUser(item):
     """ query a SNIPEIT asset: is it checked out to a user
         not a particular user, any user """
@@ -645,13 +687,25 @@ def isDeployedToUser(item):
 
 def deployedLocationId(item):
     """ query a SNIPEIT asset what location is it checked out to? """
-    if item['assigned_to']['type']=='location':
+    if isDeployedToLocation(item):
         return item['assigned_to']['id']
     return None
+
+def deployedUserId(item):
+    """ query a SNIPEIT asset what location is it checked out to? """
+    if isDeployedToUser(item):
+        return item['assigned_to']['id']
+    return None
+
 
 def setdeployedLocationId(item,val):
     """ update the local copy of an item to reflect that it has moved during cached operations"""
     item['assigned_to'] = {'id': val, 'type': 'location'}
+
+
+def setdeployedUserId(item,val):
+    """ update the local copy of an item to reflect that it has moved during cached operations"""
+    item['assigned_to'] = {'id': val, 'type': 'user'}
 
 
 def stripWhitespaceFromSerial(item):
