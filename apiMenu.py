@@ -679,7 +679,7 @@ def isDeployed(item):
 def isDeployedToLocation(item):
     """ query a SNIPEIT asset: is it checked out to a location
         not a particular location, any location. """
-    return (isDeployed(item) and item['assigned_to']['type']=='user')
+    return (isDeployed(item) and item['assigned_to']['type']=='location')
 
 def isDeployedToUser(item):
     """ query a SNIPEIT asset: is it checked out to a user
