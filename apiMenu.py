@@ -5,7 +5,7 @@ from barManual import makeTag,printLabel
 import datetime
 #import winsound
 import os
-from colors import *
+from colors import color
 
 
 if os.name=='nt':
@@ -38,7 +38,7 @@ def genericPayload(reqType,subaddress,append=None,payload=None,extraParams=None,
     if needsPrint: print(reqType,response.status_code,fullAddr)
     if response.status_code !=200:
         if needsPrint: print( response.content)
-
+        return (response.content)
     if response.status_code == 200:
         return json.loads(response.content)
     return None
@@ -51,7 +51,8 @@ def updateStudentIDs(listofEmail_Ids):
     if userid is None:
       print("cant find {0}".format(p))
       continue
-    genericPayload('patch','users/{0}'.format(userid),payload={'employee_num':p[1]})
+    x=genericPayload('patch','users/{0}'.format(userid['id']),payload={'employee_num':p[1]})
+    print(x)
 
 
 def findUser(filt,defaultSize=500):
@@ -83,7 +84,7 @@ def bulkStudentSignout():
     student=findUserById(stuId)
     while(student is None):
       stuId=input("Cant Find!\nStudentId: ")
-      student=findUser(stuID)
+      student=findUser(stuId)
     ItemId=input("Item: ")
     x=findThing(ItemId)
     confirm = input("do you want to check out\n{0}- {1}\nto\n{2}".format(ItemId,x['model']['name'],student['email']))
@@ -302,7 +303,7 @@ def clone(tag2Clone,newSN=None,newTag=None,newMAC=None):
         ('assigned_to',lambda x: x['assigned_to']),
         ]
 
-    clonableTags=['notes','assigned_to']
+    #clonableTags=['notes','assigned_to']
     dolly = {} #like the sheep its gonna be a clone
     for dst,src in clonableSpecial:
         dolly[dst]=src(ja)
@@ -423,7 +424,7 @@ def bulkCloneOnUmassMAC(donerTag, printTag=False):
 def printAssetModels():
     """ displays a list of SNIPEIT asset models """
     j = genericPayload('get','models')
-    total = j['total']
+    #total = j['total']
     rows = j['rows']
     for r in rows:
         print(r['id'],r['name'],r['model_number'])
@@ -518,10 +519,10 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
 
         if r['status']=='success':
             SuccessBeep()
-            print(colors.color('success',fg='green'))
+            print(color('success',fg='green'))
         else:
             ErrorBeep()
-            print(colors.color(r['status'],fg='red'))
+            print(color(r['status'],fg='red'))
 
 def checkIn(item,roomId=None,note=None):
     """ interface function to SNIPEIT to check assset in """
@@ -588,7 +589,7 @@ def bulkMaintenance():
       continue
 
     if type(ja) is list: # there are multiple things that have this id
-      print("found multiple valid instances of {0} will not continue".format(snOrtag))
+      print("found multiple valid instances of {0} will not continue".format(sn))
       continue
 
     payload={}
@@ -625,7 +626,7 @@ def bulkMaintenance():
 def uploadFile(assetID,filePath):
   res=None
   with open(filePath,'rb') as f:
-   files = {'file': f}
+   # files = {'file': f}
    res = genericPayload('POST','/hardware/{0}/upload'.format(assetID),fileParam=f)
   return res
 
