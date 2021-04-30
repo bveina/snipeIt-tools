@@ -362,7 +362,14 @@ def bulkArchive(note=None,DeepSearch=False):
     else:
       ErrorBeep()
 
-def bulkCloneOffUmass(donerTag,needsSticker=True):
+def bulkCloneOffUmass(donerTag=None,needsSticker=False):
+    if donerTag is None:
+      searchString = input("enter Doner Tag: ")
+      x = findThing(searchString)
+      while x is None:
+        searchString = input(f"Couldnt Find {searchString}\nenter Doner Tag: ")
+        x = findThing(searchString)
+      donerTag= x['asset_tag']
     """ repeatedly clone items that do not have existing asset tags """
     while(1):
         sn= input('scan new serial #: ')
@@ -371,7 +378,7 @@ def bulkCloneOffUmass(donerTag,needsSticker=True):
           ErrorBeep()
           print("asset already exists")
           continue
-        res = clone_old(donerTag,sn,None) #providing None autoGens the tag number
+        res = clone(donerTag,sn,None) #providing None autoGens the tag number
         if 'status' not in res.keys():
           ErrorBeep()
           print("cant determine status of clone")
