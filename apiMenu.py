@@ -36,11 +36,14 @@ def genericPayload(reqType,subaddress,append=None,payload=None,extraParams=None,
         fullAddr = baseURL+subaddress
     response = requests.request(reqType,fullAddr,headers=headers,json=payload,params=extraParams,files=None)
     if needsPrint: print(reqType,response.status_code,fullAddr)
+    if response.status_code == 401: ## permission error
+        raise PermissionError(response.content)
+    if response.status_code == 200:
+        return json.loads(response.content)
     if response.status_code !=200:
         if needsPrint: print( response.content)
         return (response.content)
-    if response.status_code == 200:
-        return json.loads(response.content)
+    
     return None
 
 def updateStudentIDs(listofEmail_Ids):
