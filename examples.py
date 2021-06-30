@@ -14,7 +14,22 @@ def testClone():
       print(" clone {0} with {1}:{2}".format(cloneTag,tag,serial))
       clone(cloneTag,newSN = serial,newTag=tag)
 
+def nameLocationFinder():
+  while(1):
+    x=findThing(input("scan Tag:"))
 
+    if x is not None:
+        if type(x) is dict:
+            print(x['name'],x['location'])
+            SuccessBeep()
+        elif type(x) is list:
+            ErrorBeep("found multiple options:")
+            for t in x:
+                print(t['name'],x['location'])
+        else:
+            ErrorBeep(f"i dont know what i found \r\n{x}")
+    else:
+        NotFoundBeep("cant find")
 
 def CreateName2Tag():
   with open("/home/bveina/logs/sn.log","rt") as f:
