@@ -36,11 +36,14 @@ def genericPayload(reqType,subaddress,append=None,payload=None,extraParams=None,
         fullAddr = baseURL+subaddress
     response = requests.request(reqType,fullAddr,headers=headers,json=payload,params=extraParams,files=None)
     if needsPrint: print(reqType,response.status_code,fullAddr)
+    if response.status_code == 401: ## permission error
+        raise PermissionError(response.content)
+    if response.status_code == 200:
+        return json.loads(response.content)
     if response.status_code !=200:
         if needsPrint: print( response.content)
         return (response.content)
-    if response.status_code == 200:
-        return json.loads(response.content)
+    
     return None
 
 def updateStudentIDs(listofEmail_Ids):
@@ -359,7 +362,14 @@ def bulkArchive(note=None,DeepSearch=False):
     else:
       ErrorBeep()
 
-def bulkCloneOffUmass(donerTag,needsSticker=True):
+def bulkCloneOffUmass(donerTag=None,needsSticker=False):
+    if donerTag is None:
+      searchString = input("enter Doner Tag: ")
+      x = findThing(searchString)
+      while x is None:
+        searchString = input(f"Couldnt Find {searchString}\nenter Doner Tag: ")
+        x = findThing(searchString)
+      donerTag= x['asset_tag']
     """ repeatedly clone items that do not have existing asset tags """
     while(1):
         sn= input('scan new serial #: ')
@@ -368,7 +378,7 @@ def bulkCloneOffUmass(donerTag,needsSticker=True):
           ErrorBeep()
           print("asset already exists")
           continue
-        res = clone_old(donerTag,sn,None) #providing None autoGens the tag number
+        res = clone(donerTag,sn,None) #providing None autoGens the tag number
         if 'status' not in res.keys():
           ErrorBeep()
           print("cant determine status of clone")
