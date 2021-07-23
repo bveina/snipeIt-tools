@@ -96,7 +96,7 @@ def bulkStudentSignout():
     
 
 
-def getAllAssets(filt=None,defaultSize=500):
+def getAllAssets(filt=None,defaultSize=500,payloadOverrides=None):
     """
     retrieves every asset in the snipe-it instance
     filt -- optional filter function, only return a list of items which match 'filt'
@@ -106,12 +106,19 @@ def getAllAssets(filt=None,defaultSize=500):
     offset=0
     count = 0 # how many items have we fetched (will not equal len(w) if filt is not None)
 
+    defaultPayload = {'limit':1,'offset':offset}
+    if payloadOverrides is not None:
+      payload = {**defaultPayload, **payloadOverrides}
+    else:
+      payload = defaultPayload
+      
     # dummy get, to find total number of items
-    r = genericPayload('get','hardware',None, {'limit':1,'offset':offset})
+    r = genericPayload('get','hardware',None, payload)
     total = r['total']
 
+    payload['limit']=defaultSize
     while (count<total):
-        r = genericPayload('get','hardware',None, {'limit':defaultSize,'offset':offset})
+        r = genericPayload('get','hardware',None, payload)
         count += len(r['rows'])
         if filt is not None:
             for item in r['rows']:
