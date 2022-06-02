@@ -486,8 +486,9 @@ def auditMode(roomId=None, autoMove=True,removeUser=False):
         roomId = int(input(' choose a room ID: '))
 
     #scan labels forever and print success or failure
+    count = 1
     while (1):
-        ID = input('scan tag or SN: ')
+        ID = input(f'{count:3}:scan tag or SN: ')
 
         #check the inventory list
         items=list(filter(lambda x:x['asset_tag'].upper()==ID.upper() or x['serial'].upper()==ID.upper(),w))
