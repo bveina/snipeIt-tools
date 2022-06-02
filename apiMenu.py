@@ -118,6 +118,7 @@ def getAllAssets(filt=None,defaultSize=500,payloadOverrides=None):
 
     payload['limit']=defaultSize
     while (count<total):
+        payload['offset']=offset
         r = genericPayload('get','hardware',None, payload)
         count += len(r['rows'])
         if filt is not None:
